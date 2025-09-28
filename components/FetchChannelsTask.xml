@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="FetchChannelsTask" extends="Task">
+  <interface>
+    <field id="url" type="string" />
+    <field id="status" type="string" />
+    <field id="titles" type="array" />
+    <field id="ids" type="array" />
+    <field id="error" type="string" />
+    <field id="directUrls" type="array" />
+</interface>
+  <script type="text/brightscript" uri="pkg:/components/FetchChannelsTask.brs" />
+</component>

@@ -1,0 +1,8 @@
+{
+  "categories_url": "http://192.168.0.35/player_api.php?action=get_live_categories",
+  "base_url": "http://192.168.0.35/player_api.php",
+  "stream_url_template": "http://192.168.0.35/live/{id}.ts",
+  "stream_format": "mp2t",
+  "play_url_template": "http://192.168.0.35/player_api.php?action=play&stream_id={id}",
+  "prefer_hls": false
+}

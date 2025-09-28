@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="FetchCategoriesTask" extends="Task">
+  <interface>
+    <field id="url" type="string" />
+    <field id="status" type="string" />
+    <field id="titles" type="array" />
+    <field id="ids" type="array" />
+    <field id="error" type="string" />
+  </interface>
+  <script type="text/brightscript" uri="pkg:/components/FetchCategoriesTask.brs" />
+</component>

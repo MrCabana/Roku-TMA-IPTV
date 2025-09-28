@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ChannelItem" extends="Group">
+  <interface>
+    <field id="itemContent" type="node" onChange="onContent"/>
+  </interface>
+  <children>
+    <Rectangle id="tilebg" width="300" height="200" color="0x404040FF" />
+    <Poster id="art" translation="[0,0]" width="300" height="170" loadDisplayMode="scaleToFit"/>
+    <Label id="label" translation="[0,176]" width="300" height="24" horizAlign="center" text=""/>
+  </children>
+  <script type="text/brightscript" uri="pkg:/components/ChannelItem.brs" />
+</component>

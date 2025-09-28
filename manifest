@@ -1,0 +1,14 @@
+title=TMA IPTV
+major_version=1
+minor_version=3
+build_version=210
+ui_resolutions=hd,fhd
+
+mm_icon_focus_fhd=pkg:/images/channel_poster_fhd.png
+mm_icon_focus_hd=pkg:/images/channel_poster_hd.png
+mm_icon_side_hd=pkg:/images/channel_side_hd.png
+mm_icon_focus_sd=pkg:/images/channel_poster_sd.png
+mm_icon_side_sd=pkg:/images/channel_side_sd.png
+
+splash_screen_fhd=pkg:/images/splash_fhd.jpg
+splash_screen_hd=pkg:/images/splash_hd.jpg

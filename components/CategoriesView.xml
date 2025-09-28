@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="CategoriesView" extends="Group" focusable="true">
+  <interface>
+    <field id="titles" type="array" onChange="onTitles"/>
+    <field id="onSelect" type="assocarray" />
+    <field id="selected" type="assocarray" />
+    <field id="selIndex" type="integer" />
+  </interface>
+  <children>
+    <!-- Header -->
+    <Label id="header" translation="[0,40]" width="1280" height="40" horizAlign="center" text="TMA IPTV"/>
+    <!-- Scrolling list container -->
+    <Label id="sectionTitle" translation="[52,78]" width="250" height="40" text="Categories" color="0xFFFFFFFF" horizAlign="center"/>
+    <Group id="listContainer" translation="[0,0]" />
+    <!-- Moving focus bar stays fixed on screen -->
+    <Poster id="focusbar" translation="[52,120]" uri="pkg:/images/focusbar_round.png" width="250" height="52" visible="true"/>
+  </children>
+  <script type="text/brightscript" uri="pkg:/components/CategoriesView.brs" />
+</component>

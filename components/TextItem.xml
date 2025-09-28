@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="TextItem" extends="Group">
+  <interface>
+    <field id="itemContent" type="node" onChange="onContent"/>
+  </interface>
+  <children>
+    <Label id="label" translation="[0,0]" width="600" height="48" horizAlign="left" vertAlign="center" text=""/>
+  </children>
+  <script type="text/brightscript" uri="pkg:/components/TextItem.brs" />
+</component>

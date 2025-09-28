@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ChannelsView" extends="Group" onVisibleChanged="onVisibleChanged" focusable="true">
+  <interface>
+    <field id="titles" type="array" onChange="onTitles"/>
+    <field id="ids" type="array" />
+    <field id="selIndex" type="integer" />
+    <field id="currentId" type="string" />
+    <field id="playPulse" type="integer" />
+    <field id="directUrls" type="array" />
+  <field id="currentUrl" type="string" alwaysNotify="true" />
+</interface>
+  <children>
+    <Label id="sectionTitle" translation="[360,78]" width="250" height="40" text="Channels" color="0xFFFFFFFF" horizAlign="center"/>
+    <Group id="listContainer" translation="[0,0]" />
+    <Poster id="focusbar" translation="[360,120]" uri="pkg:/images/focusbar_round.png" width="250" height="52" visible="true"/>
+</children>
+  <script type="text/brightscript" uri="pkg:/components/ChannelsView.brs" />
+</component>
