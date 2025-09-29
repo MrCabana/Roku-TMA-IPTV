@@ -1,4 +1,5 @@
 sub init()
+  m.focusbarOffsetX = 10
   m.focusbar = m.top.findNode("focusbar")
   m.listContainer = m.top.findNode("listContainer")
   m.labels = []
@@ -44,7 +45,15 @@ sub init()
   m.top.appendChild(m.anim)
 
   m.top.setFocus(true)
+  __bumpFocusbarWidth__()
 end sub
+
+sub __bumpFocusbarWidth__()
+  if m.focusbar <> invalid and m.focusbar.width <> invalid then
+    m.focusbar.width = m.focusbar.width + 10
+  end if
+end sub
+
 
 sub onTitles()
   m.selectedIndex = 0
@@ -93,13 +102,14 @@ sub updateFocus(doAnimate as boolean)
   if rowInWindow > m.visibleRows-1 then rowInWindow = m.visibleRows-1
   yTarget = m.baseY + rowInWindow * m.rowStep
   x = 52
+  xOffset = x + m.focusbarOffsetX
   if doAnimate then
     cur = m.focusbar.translation
-    if cur = invalid then cur = [x, yTarget]
-    m.moveInterp.keyValue = [ cur, [x, yTarget] ]
+    if cur = invalid then cur = [xOffset, yTarget]
+    m.moveInterp.keyValue = [ cur, [xOffset, yTarget] ]
     m.anim.control = "start"
   else
-    m.focusbar.translation = [x, yTarget]
+    m.focusbar.translation = [xOffset, yTarget]
   end if
 end sub
 

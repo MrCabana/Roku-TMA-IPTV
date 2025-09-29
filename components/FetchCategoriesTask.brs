@@ -82,11 +82,11 @@ sub go()
     for each it in data
       if it <> invalid and type(it) = "roAssociativeArray" then
         nm = "" : if it.Lookup("category_name") <> invalid then nm = "" + it.category_name
-        cid = "" : if it.Lookup("category_id") <> invalid then cid = u32str_any(it.category_id)
+        cid = "" : if it.Lookup("category_id_str") <> invalid then cid = toStr(it.category_id_str) else if it.Lookup("category_id") <> invalid then cid = toStr(it.category_id)
         if cid = "" and it.Lookup("category_id_str") <> invalid then cid = "" + it.category_id_str
         if nm <> "" and cid <> "" then
           cats.push(nm)
-          ids.push("" + cid)
+          ids.push(toStr(cid))
         end if
       end if
     end for
@@ -102,3 +102,11 @@ sub go()
   m.top.ids = ids
   m.top.status = "ok"
 end sub
+
+
+function toStr(x as dynamic) as string
+  if x = invalid then return ""
+  if Type(x) = "roString" then return x
+  if GetInterface(x, "ifString") <> invalid then return x
+  return "" + x
+end function

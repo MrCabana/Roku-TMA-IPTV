@@ -21,7 +21,12 @@ print ">>> MainScene.init (custom labels + animated focusbar)"
 
   
   
-  ' Style the new first-screen title label
+  
+  
+  ' nudge Categories/Channels list focusbars to the right
+  nudgeListFocusbars(20)
+' nudge selection bar a bit to the right
+' Style the new first-screen title label
   atm = m.top.findNode("appTitleMain")
   if atm <> invalid then
     f = CreateObject("roSGNode","Font")
@@ -122,11 +127,7 @@ function onKeyEvent(key as String, press as Boolean) as Boolean
       titles = cv.titles
       if titles <> invalid and idx >= 0 and idx < titles.count() then name = titles[idx]
       cid = invalid
-      if m.catMapIndex <> invalid and m.catMapIndex.doesExist(toStr(idx)) then
-        cid = m.catMapIndex[toStr(idx)]
-      else if m.catIds <> invalid and idx >= 0 and idx < m.catIds.count() then
-        cid = m.catIds[idx]
-      end if
+      if m.catIds <> invalid and idx >= 0 and idx < m.catIds.count() then cid = m.catIds[idx]
       print ">>> MainScene: OK on category idx="; idx; ", name="; name
       showChannels(cid, name)
       return true
@@ -143,11 +144,7 @@ function onKeyEvent(key as String, press as Boolean) as Boolean
       titles = cv.titles
       if titles <> invalid and idx >= 0 and idx < titles.count() then name = titles[idx]
       cid = invalid
-      if m.catMapIndex <> invalid and m.catMapIndex.doesExist(toStr(idx)) then
-        cid = m.catMapIndex[toStr(idx)]
-      else if m.catIds <> invalid and idx >= 0 and idx < m.catIds.count() then
-        cid = m.catIds[idx]
-      end if
+      if m.catIds <> invalid and idx >= 0 and idx < m.catIds.count() then cid = m.catIds[idx]
       print ">>> MainScene: OK on category idx="; idx; ", name="; name
       showChannels(cid, name)
       return true
@@ -251,6 +248,9 @@ sub showCategories()
   fetch = m.top.findNode("fetchCats")
   fetch.unobserveField("status")
   fetch.observeField("status", "onCatsStatus")
+  fetch.control = "STOP"
+  fetch.status = "" : fetch.error = ""
+  fetch.titles = [] : fetch.ids = [] : fetch.directUrls = []
   fetch.url = url
   fetch.control = "RUN"
 end sub
@@ -271,13 +271,12 @@ sub onCatsStatus()
     cv.titles = fetch.titles
     m.catIds = fetch.ids
 
-    ' Build robust maps to avoid index drift
     m.catMapIndex = {} : m.catMapTitle = {}
     if fetch.titles <> invalid and fetch.ids <> invalid then
       for i = 0 to fetch.titles.count()-1
         if i < fetch.ids.count() then
-          m.catMapIndex[toStr(i)] = fetch.ids[i]
-          m.catMapTitle[fetch.titles[i]] = fetch.ids[i]
+          m.catMapIndex[toStr(i)] = toStr(fetch.ids[i])
+          m.catMapTitle[fetch.titles[i]] = toStr(fetch.ids[i])
         end if
       end for
     end if
@@ -297,9 +296,7 @@ sub onCategoryChosen()
   idx = sel.index : name = sel.text
   ' Find category id if available
   cid = invalid
-  if m.catMapIndex <> invalid and m.catMapIndex.doesExist(toStr(idx)) then
-    cid = m.catMapIndex[toStr(idx)]
-  else if m.catIds <> invalid and idx >= 0 and idx < m.catIds.count() then
+  if m.catIds <> invalid and idx >= 0 and idx < m.catIds.count() then
     cid = m.catIds[idx]
   end if
   showChannels(cid, name)
@@ -345,49 +342,27 @@ function ToU32Str(x as dynamic) as string
 end function
 
 sub showChannels(categoryId as dynamic, label as dynamic)
-  ' Force categoryId to be an unsigned string (avoid signed overflow)
-  catStr = ""
-  if categoryId <> invalid then
-    if Type(categoryId) = "roString" then
-      catStr = categoryId
-    else
-      if GetInterface(categoryId, "ifInt") <> invalid then
-        catStr = u32str_any(categoryId)
-      else
-        catStr = toStr(categoryId)
-      end if
-    end if
-  end if
   chv = m.top.findNode("chanview")
-  if chv <> invalid then
-    chv.visible = true
-    chv.setFocus(true)
-    chv.titles = ["(loading...)"]
-    chv.ids = []
-    chv.directUrls = []
-  end if
-
+  chv.visible = true
+  chv.setFocus(true)
+  ' Build URL
   cfg = loadConfig()
-  base = "http://192.168.0.35/player_api.php"
-  if cfg <> invalid and cfg.base_url <> invalid and cfg.base_url <> "" then base = cfg.base_url
+  base = invalid : if cfg <> invalid then base = cfg.base_url else base = "http://192.168.0.35/player_api.php"
   url = base + "?action=get_live_streams"
   if categoryId <> invalid then
-    catParam = catStr
-    print ">>> showChannels: category_id = "; catStr
-    url = url + "&category_id=" + catParam
-  end if
-  print ">>> Channels: fetching from [ " + url + " ]"
+  catParam = ToU32Str(categoryId)
+' log once for debugging
+print ">>> showChannels: category_id = "; toStr(categoryId)
 
+  url = url + "&category_id=" + toStr(categoryId)
+end if
+  print ">>> Channels: fetching from [ " + url + " ]"
   fetch = m.top.findNode("fetchCh")
-  if fetch = invalid then return
   fetch.unobserveField("status")
   fetch.observeField("status", "onChStatus")
   fetch.control = "STOP"
-  fetch.status = ""
-  fetch.error = ""
-  fetch.titles = []
-  fetch.ids = []
-  fetch.directUrls = []
+  fetch.status = "" : fetch.error = ""
+  fetch.titles = [] : fetch.ids = [] : fetch.directUrls = []
   fetch.url = url
   fetch.control = "RUN"
 end sub
@@ -873,3 +848,31 @@ sub PlayPreview()
 end sub
 
 
+
+
+
+
+
+sub nudgeListFocusbars(offsetX as integer)
+  cv = m.top.findNode("catview")
+  if cv <> invalid then
+    fb = cv.findNode("focusbar")
+    if fb <> invalid and fb.translation <> invalid then
+      t = fb.translation
+      if t.count() >= 2 then
+        fb.translation = [ t[0] + offsetX, t[1] ]
+      end if
+    end if
+  end if
+
+  ch = m.top.findNode("chanview")
+  if ch <> invalid then
+    fb2 = ch.findNode("focusbar")
+    if fb2 <> invalid and fb2.translation <> invalid then
+      t2 = fb2.translation
+      if t2.count() >= 2 then
+        fb2.translation = [ t2[0] + offsetX, t2[1] ]
+      end if
+    end if
+  end if
+end sub

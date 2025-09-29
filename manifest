@@ -1,7 +1,7 @@
 title=TMA IPTV
 major_version=1
-minor_version=4
-build_version=10
+minor_version=3
+build_version=327
 ui_resolutions=hd,fhd
 
 mm_icon_focus_fhd=pkg:/images/channel_poster_fhd.png
