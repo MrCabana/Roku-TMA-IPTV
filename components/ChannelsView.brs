@@ -201,15 +201,3 @@ sub onFocusChanged()
     fr.visible = false
   end if
 end sub
-
-
-sub onVisibleChanged()
-  fr = m.top.findNode("chanSelFrame")
-  if fr = invalid then return
-  if m.top.visible = true then
-    updateSelFrame()
-    fr.visible = true
-  else
-    fr.visible = false
-  end if
-end sub

@@ -86,7 +86,7 @@ sub go()
         if cid = "" and it.Lookup("category_id_str") <> invalid then cid = "" + it.category_id_str
         if nm <> "" and cid <> "" then
           cats.push(nm)
-          ids.push(cid)
+          ids.push("" + cid)
         end if
       end if
     end for

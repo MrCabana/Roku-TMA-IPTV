@@ -3,7 +3,7 @@
   <children>
     <Poster id="bgimg" uri="pkg:/images/bg_hd.jpg" width="1280" height="720" loadDisplayMode="scaleToFit" />
     <Group id="mainmenu">
-      <Label id="hello" translation="[0,40]" width="1280" height="40" horizAlign="center" text="TMA IPTV"/>
+      T]" width="1280" height="100" horizAlign="center" text="TMA IPTV"/>
       <Label id="lbl0" translation="[80,122]" width="600" height="52" vertAlign="center" vertAlign="center" text="Live TV"/>
       <Label id="lbl1" translation="[80,183]" width="600" height="52" vertAlign="center" vertAlign="center" text="Movies"/>
       <Label id="lbl2" translation="[80,241]" width="600" height="52" vertAlign="center" vertAlign="center" text="Series"/>
@@ -12,8 +12,10 @@
     <CategoriesView id="catview" visible="false" />
     <ChannelsView id="chanview" visible="false" />
     <Video id="previewVideo" translation="[640,120]" width="600" height="338" visible="false" />
+    <Label id="nowPlayingLabel" translation="[640,466]" width="600" height="36" horizAlign="left" text="" visible="false" color="0xFFFFFFFF" />
     <FetchChannelsTask id="fetchCh" />
     <FetchCategoriesTask id="fetchCats" />
-  </children>
+      <Label id="appTitleMain" translation="[0,18]" width="1280" height="80" horizAlign="center" text="TMA IPTV" color="0xFFFFFFFF" visible="true"/>
+</children>
   <script type="text/brightscript" uri="pkg:/components/MainScene.brs" />
 </component>

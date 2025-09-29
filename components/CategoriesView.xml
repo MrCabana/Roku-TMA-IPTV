@@ -8,7 +8,7 @@
   </interface>
   <children>
     <!-- Header -->
-    <Label id="header" translation="[0,40]" width="1280" height="40" horizAlign="center" text="TMA IPTV"/>
+    <Label id="header" translation="[0,40]" width="1280" height="90" horizAlign="center" text="TMA IPTV" visible="false"/>
     <!-- Scrolling list container -->
     <Label id="sectionTitle" translation="[52,78]" width="250" height="40" text="Categories" color="0xFFFFFFFF" horizAlign="center"/>
     <Group id="listContainer" translation="[0,0]" />

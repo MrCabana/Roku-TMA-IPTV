@@ -4,7 +4,17 @@ sub init()
   m.labels = []
   m.selectedIndex = 0
 
-  ' Layout constants
+  
+
+  ' Enlarge the top "TMA IPTV" header in CategoriesView using bundled TTF
+  hd = m.top.findNode("header")
+  if hd <> invalid then
+    f = CreateObject("roSGNode","Font")
+    f.uri = "pkg:/fonts/DejaVuSans-Bold.ttf"
+    f.size = 48
+    hd.font = f
+  end if
+' Layout constants
   m.baseX = 80
   m.baseY = 120          ' first row Y (below header)
   m.rowStep = 64
@@ -95,16 +105,52 @@ end sub
 
 function onKeyEvent(key as String, press as Boolean) as Boolean
   if not press then return false
-  titles = m.top.titles : if titles = invalid then titles = []
-  if key = "up" then
-    if m.selectedIndex > 0 then m.selectedIndex = m.selectedIndex - 1
+  titles = m.top.titles
+  if titles = invalid or titles.count() = 0 then return false
+
+  if key = "down" then
+    if m.selectedIndex < titles.count()-1 then
+      m.selectedIndex = m.selectedIndex + 1
+      m.top.selIndex = m.selectedIndex
+    else
+      m.selectedIndex = 0
+      m.topIndex = 0
+      m.top.selIndex = m.selectedIndex
+    end if
+    ensureVisible()
+    renderWindow()
+    updateFocus(true)
     return true
-  else if key = "down" then
-    if m.selectedIndex < titles.count()-1 then m.selectedIndex = m.selectedIndex + 1
+  else if key = "up" then
+    if m.selectedIndex > 0 then
+      m.selectedIndex = m.selectedIndex - 1
+      m.top.selIndex = m.selectedIndex
+    else
+      ' wrap to last safely
+      titles = m.top.titles
+      if titles = invalid then titles = []
+      if titles.count() > 0 then
+        m.selectedIndex = titles.count() - 1
+      else
+        m.selectedIndex = 0
+      end if
+      m.topIndex = m.selectedIndex - (m.visibleRows - 1)
+      if m.topIndex < 0 then m.topIndex = 0
+    end if
+    ensureVisible()
+    renderWindow()
+    updateFocus(true)
+    return true
+  else if key = "OK" or key = "right" or key = "left" then
+  if press and m.top.onSelect <> invalid and m.top.onSelect.callback <> invalid then
+    m.top.onSelect.callback(m.selectedIndex, titles[m.selectedIndex])
     return true
   end if
-  ' Let parent handle OK/left/right/back
+  return false
+
+  else if key = "back" then
+    return false
+  end if
+
   return false
 end function
-
-

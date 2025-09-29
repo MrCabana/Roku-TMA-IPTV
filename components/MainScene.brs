@@ -19,7 +19,25 @@ print ">>> MainScene.init (custom labels + animated focusbar)"
   updateLabelStyles()
   m.top.setFocus(true)
 
-  vid__ = m.top.findNode("previewVideo")
+  
+  
+  ' Style the new first-screen title label
+  atm = m.top.findNode("appTitleMain")
+  if atm <> invalid then
+    f = CreateObject("roSGNode","Font")
+    f.uri = "pkg:/fonts/DejaVuSans-Bold.ttf"
+    f.size = 48
+    atm.font = f
+  end if
+' Apply bundled TTF font to the title
+  hh = m.top.findNode("hello")
+  if hh <> invalid then
+    f = CreateObject("roSGNode","Font")
+    f.uri = "pkg:/fonts/DejaVuSans-Bold.ttf"
+    f.size = 48
+    hh.font = f
+  end if
+vid__ = m.top.findNode("previewVideo")
   if vid__ <> invalid then
     vid__.unobserveField("state")
     vid__.observeField("state", "onPreviewState")
@@ -104,7 +122,11 @@ function onKeyEvent(key as String, press as Boolean) as Boolean
       titles = cv.titles
       if titles <> invalid and idx >= 0 and idx < titles.count() then name = titles[idx]
       cid = invalid
-      if m.catIds <> invalid and idx >= 0 and idx < m.catIds.count() then cid = m.catIds[idx]
+      if m.catMapIndex <> invalid and m.catMapIndex.doesExist(toStr(idx)) then
+        cid = m.catMapIndex[toStr(idx)]
+      else if m.catIds <> invalid and idx >= 0 and idx < m.catIds.count() then
+        cid = m.catIds[idx]
+      end if
       print ">>> MainScene: OK on category idx="; idx; ", name="; name
       showChannels(cid, name)
       return true
@@ -112,7 +134,7 @@ function onKeyEvent(key as String, press as Boolean) as Boolean
       return false  ' let CategoriesView handle nav keys
     end if
   end if
-  if (key = "OK" or key = "right") then
+  if key = "OK" then
     cv = m.top.findNode("catview")
     if cv <> invalid and cv.visible = true then
       idx = 0
@@ -121,7 +143,11 @@ function onKeyEvent(key as String, press as Boolean) as Boolean
       titles = cv.titles
       if titles <> invalid and idx >= 0 and idx < titles.count() then name = titles[idx]
       cid = invalid
-      if m.catIds <> invalid and idx >= 0 and idx < m.catIds.count() then cid = m.catIds[idx]
+      if m.catMapIndex <> invalid and m.catMapIndex.doesExist(toStr(idx)) then
+        cid = m.catMapIndex[toStr(idx)]
+      else if m.catIds <> invalid and idx >= 0 and idx < m.catIds.count() then
+        cid = m.catIds[idx]
+      end if
       print ">>> MainScene: OK on category idx="; idx; ", name="; name
       showChannels(cid, name)
       return true
@@ -225,8 +251,8 @@ sub showCategories()
   fetch = m.top.findNode("fetchCats")
   fetch.unobserveField("status")
   fetch.observeField("status", "onCatsStatus")
-  print ">>> showChannels: set url"; : fetch.url = url
-  print ">>> showChannels: RUN"; : fetch.control = "RUN"
+  fetch.url = url
+  fetch.control = "RUN"
 end sub
 
 
@@ -244,6 +270,17 @@ sub onCatsStatus()
   if fetch.status = "ok" then
     cv.titles = fetch.titles
     m.catIds = fetch.ids
+
+    ' Build robust maps to avoid index drift
+    m.catMapIndex = {} : m.catMapTitle = {}
+    if fetch.titles <> invalid and fetch.ids <> invalid then
+      for i = 0 to fetch.titles.count()-1
+        if i < fetch.ids.count() then
+          m.catMapIndex[toStr(i)] = fetch.ids[i]
+          m.catMapTitle[fetch.titles[i]] = fetch.ids[i]
+        end if
+      end for
+    end if
     print ">>> LiveTV: categories loaded: "; fetch.titles.count(); " items"
   else if fetch.status = "error" then
     print ">>> LiveTV: fetch error -> "; fetch.error
@@ -253,25 +290,20 @@ sub onCatsStatus()
 end sub
 
 sub onCategoryChosen()
+  print ">>> onCategoryChosen: fired"
   cv = m.top.findNode("catview")
-  chv = m.top.findNode("chanview")
-  if cv = invalid or chv = invalid then return
-  idx = cv.selIndex : if idx = invalid then idx = 0
-  titles = cv.titles : if titles = invalid then titles = []
-  ids = m.catIds : if ids = invalid then ids = []
-  lbl = "" : if idx >= 0 and idx < titles.count() then lbl = titles[idx]
-  cid = "" : if idx >= 0 and idx < ids.count() then cid = ids[idx]
-  print ">>> MainScene: onCategoryChosen selIdx="; idx; " name="; lbl; " id="; cid
-  ' focus channels immediately so RIGHT/OK doesn't get eaten
-  chv.visible = true
-  chv.selIndex = 0
-  chv.setFocus(true)
-  fr = m.top.findNode("chanSelFrame") : if fr <> invalid then fr.visible = true
-  showChannels(cid, lbl)
+  sel = cv.selected
+  if sel = invalid then return
+  idx = sel.index : name = sel.text
+  ' Find category id if available
+  cid = invalid
+  if m.catMapIndex <> invalid and m.catMapIndex.doesExist(toStr(idx)) then
+    cid = m.catMapIndex[toStr(idx)]
+  else if m.catIds <> invalid and idx >= 0 and idx < m.catIds.count() then
+    cid = m.catIds[idx]
+  end if
+  showChannels(cid, name)
 end sub
-
-
-
 
 
 function ToStr(x as dynamic) as string
@@ -313,73 +345,66 @@ function ToU32Str(x as dynamic) as string
 end function
 
 sub showChannels(categoryId as dynamic, label as dynamic)
-  chv = m.top.findNode("chanview")
-  cfg = m.config
-  if chv = invalid or cfg = invalid then return
-
-  ' Always resolve the category id from our stored array to avoid sign/overflow issues
-  cv = m.top.findNode("catview")
-  cid = invalid
-  if cv <> invalid and m.catIds <> invalid then
-    idx = cv.selIndex
-    if idx = invalid then idx = 0
-    if idx >= 0 and idx < m.catIds.count() then
-      cid = m.catIds[idx]
+  ' Force categoryId to be an unsigned string (avoid signed overflow)
+  catStr = ""
+  if categoryId <> invalid then
+    if Type(categoryId) = "roString" then
+      catStr = categoryId
+    else
+      if GetInterface(categoryId, "ifInt") <> invalid then
+        catStr = u32str_any(categoryId)
+      else
+        catStr = toStr(categoryId)
+      end if
     end if
   end if
-  if cid = invalid or cid = "" then
-    ' fallback to incoming param, but do NOT transform it
-    cid = categoryId
+  chv = m.top.findNode("chanview")
+  if chv <> invalid then
+    chv.visible = true
+    chv.setFocus(true)
+    chv.titles = ["(loading...)"]
+    chv.ids = []
+    chv.directUrls = []
   end if
 
-  base = cfg.baseUrl
+  cfg = loadConfig()
+  base = "http://192.168.0.35/player_api.php"
+  if cfg <> invalid and cfg.base_url <> invalid and cfg.base_url <> "" then base = cfg.base_url
   url = base + "?action=get_live_streams"
-  if cid <> invalid and cid <> "" then
-    url = url + "&category_id=" + cid
+  if categoryId <> invalid then
+    catParam = catStr
+    print ">>> showChannels: category_id = "; catStr
+    url = url + "&category_id=" + catParam
   end if
-
   print ">>> Channels: fetching from [ " + url + " ]"
 
-  print ">>> showChannels: creating fetch task"
-  fetch = createObject("roSGNode", "FetchChannelsTask")
-  print ">>> showChannels: set fetch id"; : fetch.id = "fetchCh"
-  print ">>> showChannels: observe status onChStatus"; : fetch.observeField("status", "onChStatus")
-  print ">>> showChannels: set url"; : fetch.url = url
-  print ">>> showChannels: appendChild(fetch)"; : m.top.appendChild(fetch)
-  print ">>> showChannels: RUN"; : fetch.control = "RUN"
-
-  chv.visible = false
-  m.top.findNode("nowPlayingLabel").visible = false
-  m.currentCategory = label
+  fetch = m.top.findNode("fetchCh")
+  if fetch = invalid then return
+  fetch.unobserveField("status")
+  fetch.observeField("status", "onChStatus")
+  fetch.control = "STOP"
+  fetch.status = ""
+  fetch.error = ""
+  fetch.titles = []
+  fetch.ids = []
+  fetch.directUrls = []
+  fetch.url = url
+  fetch.control = "RUN"
 end sub
-
 
 sub onChStatus()
   fetch = m.top.findNode("fetchCh")
   chv = m.top.findNode("chanview")
-  if fetch = invalid then
-    print ">>> onChStatus: fetchCh not found"
-    return
-  end if
   if fetch.status = "ok" then
     chv.titles = fetch.titles
     chv.ids = fetch.ids
     if fetch.directUrls <> invalid then chv.directUrls = fetch.directUrls else chv.directUrls = []
     print ">>> Channels loaded: "; fetch.titles.count(); " items"
-    chv.selIndex = 0
-    chv.visible = true
-    chv.setFocus(true)
-    fr = m.top.findNode("chanSelFrame") : if fr <> invalid then fr.visible = true
   else
     print ">>> Channels fetch error -> "; fetch.error
     chv.titles = ["(no channels)"]
-    chv.selIndex = 0
-    chv.visible = true
-    chv.setFocus(true)
   end if
 end sub
-
-
 
 function manualReplace(hay as string, needle as string, with as string) as string
   if hay = invalid or needle = invalid then return hay
@@ -466,7 +491,7 @@ sub onChannelSelectionChanged()
     tarr = chv.titles : if tarr = invalid then tarr = []
     si = chv.selIndex : if si = invalid then si = 0
     tt = "" : if si >= 0 and si < tarr.count() then tt = tarr[si]
-    lbl.text = "Now Playing: " + tt : lbl.visible = true
+    lbl.text = tt : lbl.visible = true
   end if
 end sub
 
@@ -506,7 +531,7 @@ sub onPreviewState()
       tarr = chv.titles : if tarr = invalid then tarr = []
       si = chv.selIndex : if si = invalid then si = 0
       tt = "" : if si >= 0 and si < tarr.count() then tt = tarr[si]
-      lbl.text = "Now Playing: " + tt
+      lbl.text = tt
       lbl.visible = true
     end if
     fr = m.top.findNode("chanSelFrame")
@@ -828,6 +853,8 @@ sub PlayPreview()
     if chv.directUrls <> invalid then di = chv.directUrls
 
     si = chv.selectedIndex
+    if si = invalid and chv.selIndex <> invalid then si = chv.selIndex
+    if si = invalid then si = -1
     if si >= 0 and di <> invalid and si < di.count() and di[si] <> "" then
         surl = di[si]
     end if
@@ -844,6 +871,5 @@ sub PlayPreview()
     vid.content = { url: surl }
     vid.control = "play"
 end sub
-
 
 
